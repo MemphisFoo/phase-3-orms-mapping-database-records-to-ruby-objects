@@ -16,17 +16,7 @@ class Song
     DB[:conn].execute(sql)
   end
 
-  def self.create_table
-    sql = <<-SQL
-      CREATE TABLE IF NOT EXISTS songs (
-        id INTEGER PRIMARY KEY,
-        name TEXT,
-        album TEXT
-      )
-    SQL
-
-    DB[:conn].execute(sql)
-  end
+  
 
   def save
     sql = <<-SQL
@@ -48,5 +38,102 @@ class Song
     song = Song.new(name: name, album: album)
     song.save
   end
+
+  def self.new_from_db(row)
+    # self.new is equivalent to Song.new
+    self.new(id: row[0], name: row[1], album: row[2])
+  end
+
+  def self.all
+    sql = <<-SQL
+      SELECT *
+      FROM songs
+    SQL
+
+      DB[:conn].execute(sql).map do |row|
+      self.new_from_db(row)
+    end
+  end
+
+  def self.find_by_name(name)
+    sql = <<-SQL
+      SELECT *
+      FROM songs
+      WHERE name = ?
+      LIMIT 1
+    SQL
+
+    DB[:conn].execute(sql, name).map do |row|
+      self.new_from_db(row)
+    end.first
+  end
+
+  def self.all
+    sql = <<-SQL
+      SELECT *
+      FROM dogs;
+    SQL
+
+    DB[:conn].execute(sql).map do |row|
+      self.new_from_db(row)
+    end
+  end
+
+  def self.find_by_name(name)
+    sql = <<-SQL
+      SELECT *
+      FROM dogs
+      WHERE dogs.name = ?
+      LIMIT 1;
+    SQL
+
+    DB[:conn].execute(sql, name).map do |row|
+      self.new_from_db(row)
+    end.first
+  end
+
+  def self.find(id)
+    sql = <<-SQL
+      SELECT *
+      FROM dogs
+      WHERE dogs.id = ?
+      LIMIT 1;
+    SQL
+
+    DB[:conn].execute(sql, id).map do |row|
+      self.new_from_db(row)
+    end.first
+  end
+
+  def self.find_or_create_by(name:, breed:)
+    sql = <<-SQL
+      SELECT *
+      FROM dogs
+      WHERE name = ?
+      AND breed = ?
+      LIMIT 1
+    SQL
+
+    row = DB[:conn].execute(sql, name, breed).first
+
+    if row
+      self.new_from_db(row)
+    else
+      self.create(name: name, breed: breed)
+    end
+  end
+
+  def update
+    sql = <<-SQL
+      UPDATE dogs 
+      SET 
+        name = ?, 
+        breed = ?  
+      WHERE id = ?;
+    SQL
+    
+    DB[:conn].execute(sql, self.name, self.breed, self.id)
+  end
+
 
 end
